@@ -1,0 +1,6 @@
+pandas
+kaggle
+scikit-learn
+matplotlib
+tqdm
+dotenv
