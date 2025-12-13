@@ -1,0 +1,71 @@
+import os
+import unittest
+import numpy as np
+import pandas as pd
+from space_titanic import TitanicModel
+
+space = TitanicModel
+
+
+class TestTitanic(unittest.TestCase):
+    def test_preprocess_fills_numeric_missing(self):
+        df = pd.DataFrame(
+            {
+                "num1": [1.0, np.nan, 3.0],
+                "num2": [np.nan, 5.0, 6.0],
+                "cat": ["a", None, "c"],
+            }
+        )
+        processed = space.preprocess(df.copy())
+        self.assertFalse(processed[["num1", "num2"]].isna().any().any())
+        self.assertTrue(processed["cat"].isna().any())
+
+    def test_encode_encodes_object_columns_except_passengerid(self):
+        df = pd.DataFrame(
+            {
+                "PassengerId": ["0001_01", "0002_01", "0003_01"],
+                "HomePlanet": ["Earth", "Europa", "Mars"],
+                "Cabin": ["A/0/S", "B/1/P", "C/2/S"],
+            }
+        )
+        space.encode(df)
+        self.assertEqual(df["PassengerId"].dtype.kind, "O")
+        self.assertIn(df["HomePlanet"].dtype.kind, "biufc")
+        self.assertIn(df["Cabin"].dtype.kind, "biufc")
+
+    def test_visualize_data_creates_missing_png(self):
+        if os.path.exists("missing.png"):
+            os.remove("missing.png")
+        df = pd.DataFrame({"a": [1, None, 3], "b": [4, 5, None]})
+        space.visualize_data(df)
+        self.assertTrue(os.path.exists("missing.png"))
+        self.assertGreater(os.path.getsize("missing.png"), 0)
+        os.remove("missing.png")
+
+    def test_visualize_correlation_creates_correlation_png(self):
+        if os.path.exists("correlation.png"):
+            os.remove("correlation.png")
+        df = pd.DataFrame(
+            {
+                "Feature1": [1, 2, 3, 4],
+                "Feature2": [4, 3, 2, 1],
+                "Transported": [0, 1, 0, 1],
+            }
+        )
+        space.visualize_correlation(df)
+        self.assertTrue(os.path.exists("correlation.png"))
+        self.assertGreater(os.path.getsize("correlation.png"), 0)
+        os.remove("correlation.png")
+
+    def test_visualize_training_process_creates_training_knn_png(self):
+        if os.path.exists("training_knn.png"):
+            os.remove("training_knn.png")
+        scores = {1: 0.5, 2: 0.6, 3: 0.55}
+        space.visualize_training_process(scores)
+        self.assertTrue(os.path.exists("training_knn.png"))
+        self.assertGreater(os.path.getsize("training_knn.png"), 0)
+        os.remove("training_knn.png")
+
+
+if __name__ == "__main__":
+    unittest.main()
